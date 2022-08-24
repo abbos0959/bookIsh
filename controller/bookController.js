@@ -5,68 +5,46 @@ const catchErrorAsync = require("../utilities/catchUtil");
 const axios = require("axios");
 const ApiFeatures = require("../utilities/apiFeatures");
 
-const GetAllBook = catchError(async (req, res, next) => {
-   const resultperpage = 6;
-   const features = new ApiFeatures(bookmodel.find(), req.query)
-      .search()
-      .filter()
-      .pagination(resultperpage);
-   const data = await features.query;
+const getAllBook = catchErrorAsync(async (req, res) => {
+   const book = await bookmodel.find();
 
-   res.status(200).json({
-      soni: data.length,
-      data,
-   });
-});
-
-const PostBook = catchErrorAsync(async (req, res, next) => {
-   const postData = {
-      isbn: req.body.isbn,
-      title: req.body.title,
-      author: req.body.author,
-      first_publisher: req.body.first_publisher,
-      pages: req.body.pages,
-      book_status: req.body.book_status,
-   };
-   const post = await bookmodel.create(postData);
-   res.status(201).json({
-      post,
-   });
-});
-
-const deleteBook = catchErrorAsync(async (req, res, next) => {
-   const Id = req.params.id;
-
-   const deleteBook = await bookmodel.findByIdAndDelete(Id);
-
-   if (!deleteBook) {
-      return next(new AppError("bunday idli book mavjud emas", 404));
-   }
-   res.status(200).json({
-      deleteBook,
-   });
-});
-
-const getOneBook = catchErrorAsync(async (req, res, next) => {
-   const oneBook = await bookmodel.findById(req.params.id);
-
-   if (!oneBook) {
-      return next(new AppError("bunday idli kitob mavjud emas", 404));
+   if (!book) {
+      return next(new AppError("ma`lumot topilmadi", 404));
    }
 
    res.status(200).json({
-      oneBook,
+      book,
+   });
+});
+const addBook = catchError(async (req, res, next) => {
+   const { isbn } = req.params;
+   const url = `https://openlibrary.org/books/${isbn}.json`;
+   const data = await axios.get(url);
+
+   if (!data) {
+      return next(new AppError("ma`lumot topilmadi", 404));
+   }
+   const author = await axios.get(`https://openlibrary.org/${data.data.authors[0].key}.json`);
+   console.log(author);
+   const book = await bookmodel.create({
+      isbn: req.params.isbn,
+      title: data.data.title,
+      author: author.data.alternate_names,
+      first_publisher: data.data.publish_date,
+      pages: data.data.number_of_pages,
+   });
+   res.status(200).json({
+      book,
+   });
+   console.log("bu booooooooooook", book);
+});
+const updateBook = catchError(async (req, res) => {
+   const book = await bookmodel.findOne({ isbn: req.body.isbn });
+   book.status = req.body.status;
+   book.save({ validateBeforeSave: true });
+   res.status(200).json({
+      book,
    });
 });
 
-const UpdateBook = catchErrorAsync(async (req, res, next) => {
-   const bookupdate = await bookmodel.findByIdAndUpdate(req.params.id,req.body);
-   if (!bookupdate) {
-      return next(new AppError(" bunday idli book mavjud emas", 404));
-   }
-   res.status(200).json({
-      message:"book updated",
-      bookupdate
-   });
-});
-module.exports = { GetAllBook, PostBook, deleteBook, getOneBook, UpdateBook };
+module.exports = { getAllBook, addBook, updateBook };

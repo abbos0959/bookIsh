@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/api/v1/books", BookRouter);
+app.use("/api", BookRouter);
 
 app.use(errorController);
 module.exports = app;
