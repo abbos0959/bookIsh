@@ -3,14 +3,19 @@ const catchError = require("../utilities/catchUtil");
 const AppError = require("../utilities/appError");
 const catchErrorAsync = require("../utilities/catchUtil");
 const axios = require("axios");
+const ApiFeatures = require("../utilities/apiFeatures");
 
 const GetAllBook = catchError(async (req, res, next) => {
-   const allBook = await bookmodel.find();
-   if (!allBook) {
-      return next(new AppError("kitoblar mavjud emas", 404));
-   }
+   const resultperpage = 6;
+   const features = new ApiFeatures(bookmodel.find(), req.query)
+      .search()
+      .filter()
+      .pagination(resultperpage);
+   const data = await features.query;
+
    res.status(200).json({
-      allBook,
+      soni: data.length,
+      data,
    });
 });
 
@@ -53,4 +58,15 @@ const getOneBook = catchErrorAsync(async (req, res, next) => {
       oneBook,
    });
 });
-module.exports = { GetAllBook, PostBook, deleteBook,getOneBook };
+
+const UpdateBook = catchErrorAsync(async (req, res, next) => {
+   const bookupdate = await bookmodel.findByIdAndUpdate(req.params.id,req.body);
+   if (!bookupdate) {
+      return next(new AppError(" bunday idli book mavjud emas", 404));
+   }
+   res.status(200).json({
+      message:"book updated",
+      bookupdate
+   });
+});
+module.exports = { GetAllBook, PostBook, deleteBook, getOneBook, UpdateBook };
