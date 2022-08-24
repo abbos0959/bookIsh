@@ -24,8 +24,15 @@ const addBook = catchError(async (req, res, next) => {
    if (!data) {
       return next(new AppError("ma`lumot topilmadi", 404));
    }
+
    const author = await axios.get(`https://openlibrary.org/${data.data.authors[0].key}.json`);
-   console.log(author);
+   console.log("bu authorrrsssss", author);
+
+
+   if(!author){
+      return next(new AppError("author yo`q",404))
+   }
+
    const book = await bookmodel.create({
       isbn: req.params.isbn,
       title: data.data.title,
@@ -40,8 +47,8 @@ const addBook = catchError(async (req, res, next) => {
 });
 const updateBook = catchError(async (req, res) => {
    const book = await bookmodel.findOne({ isbn: req.body.isbn });
-   book.status = req.body.status;
-   book.save({ validateBeforeSave: true });
+   book.book_status = req.body.book_status;
+   book.save({ validateBeforeSave: false });
    res.status(200).json({
       book,
    });
