@@ -10,15 +10,13 @@ const GetAllBook = catchError(async (req, res, next) => {
       return next(new AppError("kitoblar mavjud emas", 404));
    }
    res.status(200).json({
-      allBook
-   })
+      allBook,
+   });
 });
 
 const PostBook = catchErrorAsync(async (req, res, next) => {
-   
-
    const postData = {
-      isbn:req.body.isbn,
+      isbn: req.body.isbn,
       title: req.body.title,
       author: req.body.author,
       first_publisher: req.body.first_publisher,
@@ -44,5 +42,15 @@ const deleteBook = catchErrorAsync(async (req, res, next) => {
    });
 });
 
-const getOneBook=catchErrorAsync()
-module.exports = { GetAllBook, PostBook, deleteBook };
+const getOneBook = catchErrorAsync(async (req, res, next) => {
+   const oneBook = await bookmodel.findById(req.params.id);
+
+   if (!oneBook) {
+      return next(new AppError("bunday idli kitob mavjud emas", 404));
+   }
+
+   res.status(200).json({
+      oneBook,
+   });
+});
+module.exports = { GetAllBook, PostBook, deleteBook,getOneBook };
